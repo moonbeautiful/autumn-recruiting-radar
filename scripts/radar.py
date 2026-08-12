@@ -577,7 +577,7 @@ def chat_markdown(
     lines = [
         f"## 今日岗位更新 · {run_date}",
         "",
-        f"本次新增 {new_count} 个，变化 {changed_count} 个。",
+        f"本次搜集到 {new_count} 个，变化 {changed_count} 个。",
         "",
     ]
     if not pushed:
