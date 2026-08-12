@@ -1,0 +1,106 @@
+[
+  {
+    "company": "阿里巴巴",
+    "title": "AI产品经理-2027届校园招聘",
+    "city": "北京",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-01",
+    "deadline": "2026-08-15",
+    "source_status": "open",
+    "source_url": "https://campus.example.com/alibaba/ai-pm?utm_source=test",
+    "source_name": "阿里巴巴校园招聘官网",
+    "source_tier": "official",
+    "salary": "25-40K·15薪",
+    "requirements": [
+      "负责AI产品需求分析"
+    ],
+    "requirement_keywords": [
+      "大模型",
+      "Agent",
+      "数据分析"
+    ],
+    "match_evidence": [
+      "2027届",
+      "AI产品经理"
+    ],
+    "highlights": [
+      "参与AI应用产品设计"
+    ],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-11T08:00:00+08:00"
+  },
+  {
+    "company": "阿里巴巴",
+    "title": "AI产品经理",
+    "city": "北京",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-01",
+    "deadline": "2026-08-15",
+    "source_status": "unknown",
+    "source_url": "https://jobs.example-platform.com/alibaba-ai-pm?from=feed",
+    "source_name": "示例招聘平台",
+    "source_tier": "platform",
+    "requirements": [],
+    "match_evidence": [
+      "AI产品"
+    ],
+    "highlights": [],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-11T08:00:00+08:00"
+  },
+  {
+    "company": "字节跳动",
+    "title": "AI产品运营实习生",
+    "city": "上海",
+    "graduation_year": "2027",
+    "employment_type": "internship",
+    "published_at": "2026-08-05",
+    "deadline": "unknown",
+    "source_status": "open",
+    "source_url": "https://jobs.example.com/bytedance/ai-ops",
+    "source_name": "字节跳动校园招聘官网",
+    "source_tier": "official",
+    "requirements": [
+      "深度使用AI产品"
+    ],
+    "match_evidence": [
+      "AI产品运营",
+      "上海"
+    ],
+    "highlights": [
+      "参与AI产品增长"
+    ],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-11T08:00:00+08:00"
+  },
+  {
+    "company": "无效公司",
+    "title": "AI产品经理",
+    "city": "杭州",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-01",
+    "deadline": "2026-09-01",
+    "source_status": "open",
+    "source_url": "not-a-url",
+    "source_name": "无效来源",
+    "source_tier": "other",
+    "fetched_at": "2026-08-11T08:00:00+08:00"
+  },
+  {
+    "company": "示例银行",
+    "title": "财务管培生",
+    "city": "北京",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-01",
+    "deadline": "2026-09-01",
+    "source_status": "open",
+    "source_url": "https://campus.example-bank.com/finance",
+    "source_name": "示例银行招聘官网",
+    "source_tier": "official",
+    "fetched_at": "2026-08-11T08:00:00+08:00"
+  }
+]

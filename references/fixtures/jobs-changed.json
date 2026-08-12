@@ -1,0 +1,106 @@
+[
+  {
+    "company": "阿里巴巴",
+    "title": "AI产品经理",
+    "city": "北京",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-01",
+    "deadline": "2026-08-20",
+    "source_status": "open",
+    "source_url": "https://campus.example.com/alibaba/ai-pm",
+    "source_name": "阿里巴巴校园招聘官网",
+    "source_tier": "official",
+    "salary": "30-45K·16薪",
+    "requirements": [
+      "负责AI产品需求分析"
+    ],
+    "requirement_keywords": [
+      "大模型",
+      "Agent",
+      "数据分析"
+    ],
+    "match_evidence": [
+      "2027届",
+      "AI产品经理"
+    ],
+    "highlights": [
+      "参与AI应用产品设计",
+      "新增用户研究职责"
+    ],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-12T08:00:00+08:00"
+  },
+  {
+    "company": "字节跳动",
+    "title": "AI产品运营实习生",
+    "city": "上海",
+    "graduation_year": "2027",
+    "employment_type": "internship",
+    "published_at": "2026-08-05",
+    "deadline": "unknown",
+    "source_status": "open",
+    "source_url": "https://jobs.example.com/bytedance/ai-ops",
+    "source_name": "字节跳动校园招聘官网",
+    "source_tier": "official",
+    "requirements": [
+      "深度使用AI产品"
+    ],
+    "match_evidence": [
+      "AI产品运营",
+      "上海"
+    ],
+    "highlights": [
+      "参与AI产品增长"
+    ],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-12T08:00:00+08:00"
+  },
+  {
+    "company": "联想",
+    "title": "AI产品经理",
+    "city": "杭州",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-08-12",
+    "deadline": "2026-09-10",
+    "source_status": "open",
+    "source_url": "https://talent.example.com/lenovo/ai-pm",
+    "source_name": "联想校园招聘官网",
+    "source_tier": "official",
+    "requirements": [
+      "能够完成AI产品原型"
+    ],
+    "match_evidence": [
+      "2027届",
+      "AI产品经理"
+    ],
+    "highlights": [
+      "AI专项校园招聘"
+    ],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-12T08:00:00+08:00"
+  },
+  {
+    "company": "腾讯",
+    "title": "AI产品运营",
+    "city": "上海",
+    "graduation_year": "2027",
+    "employment_type": "campus",
+    "published_at": "2026-07-20",
+    "deadline": "unknown",
+    "source_status": "closed",
+    "source_url": "https://join.example.com/tencent/ai-ops",
+    "source_name": "腾讯校园招聘官网",
+    "source_tier": "official",
+    "requirements": [
+      "负责AI产品运营"
+    ],
+    "match_evidence": [
+      "职位已关闭"
+    ],
+    "highlights": [],
+    "alternate_sources": [],
+    "fetched_at": "2026-08-12T08:00:00+08:00"
+  }
+]

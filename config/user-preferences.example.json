@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "onboarded": false,
+  "graduation_years": [],
+  "role_keywords": [],
+  "cities": [],
+  "employment_types": [
+    "campus"
+  ],
+  "company_type": "",
+  "company_preferences": [],
+  "industry_preferences": [],
+  "schedule": {
+    "enabled": false,
+    "time": "08:00",
+    "timezone": "Asia/Shanghai",
+    "notify_on_update": false
+  }
+}

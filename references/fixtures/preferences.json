@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "onboarded": true,
+  "graduation_years": [
+    "2027"
+  ],
+  "role_keywords": [
+    "AI产品",
+    "AI运营"
+  ],
+  "cities": [
+    "北京",
+    "上海",
+    "杭州"
+  ],
+  "employment_types": [
+    "campus",
+    "internship",
+    "conversion"
+  ],
+  "company_preferences": [
+    "阿里巴巴"
+  ],
+  "industry_preferences": [
+    "人工智能"
+  ],
+  "schedule": {
+    "enabled": true,
+    "time": "08:00",
+    "timezone": "Asia/Shanghai"
+  }
+}

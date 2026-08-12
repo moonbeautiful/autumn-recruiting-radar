@@ -1,0 +1,253 @@
+---
+name: "autumn-recruitment-tracker-pro"
+description: "Collects, verifies, deduplicates, and monitors campus jobs with deadline and change alerts. Invoke when users request recruiting searches, daily tracking, or job updates."
+---
+
+# 秋招信息搜集
+
+面向中国大陆校招、实习和实习转正的信息搜集 Skill。先确认求职偏好，再从公开来源发现岗位，优先核验企业招聘官网，最后用确定性脚本完成匹配、跨来源去重、变化检测和截止识别，并把岗位清单直接回复到当前聊天。
+
+## 运行环境（开源可移植）
+
+本 Skill 面向开源分发，任何人可克隆到自己电脑安装使用，因此必须满足：
+
+- **跨平台**：所有脚本是纯 Python 3.8+ 标准库，Windows / macOS / Linux 都能运行；不写死绝对路径，不依赖 `osascript`、`launchd` 等某一系统专有命令。
+- **跨模型 / 跨客户端**：发现岗位只用“宿主客户端自带的后台联网搜索 / 网页读取能力”，不额外安装工具、不控制用户浏览器、不产生任何额外费用。
+- **只有两条路径**：
+  1. 客户端有后台搜索 / 网页读取（Trae、Claude 等主流 AI 客户端都自带）→ 直接后台联网搜集岗位，用户零操作；
+  2. 客户端确实没有任何联网能力 → 按下面的原文提示用户，然后停止，**绝不凭记忆编造岗位、公司、链接或截止时间**。
+
+  联网不可用时的固定提示：
+
+  > 当前客户端没有可用的联网搜索能力，我无法为你实时获取岗位信息。请在支持联网的 AI 客户端里再运行一次这个技能。
+
+- 无论哪条路径能拿到岗位，产物统一写进 `runtime/inbox/jobs-input.json`，后续处理完全一致。
+
+## 配置边界
+
+开始前完整读取：
+
+- [configuration.md](references/configuration.md)：用户可改配置、项目配置和运行状态的边界；
+- [data-contract.md](references/data-contract.md)：岗位输入和输出字段；
+- [source-strategy.md](references/source-strategy.md)：来源优先级、发现与核验流程。
+
+不得让用户修改 `config/project.json`。用户偏好只写入 `runtime/user-preferences.json`；程序状态只写入 `runtime/state/`。
+
+## 第 0 步：初始化
+
+先运行：
+
+```bash
+SKILL_DIR=$(cd "$(dirname "SKILL.md")" && pwd)
+python3 "$SKILL_DIR/scripts/bootstrap.py"
+```
+
+读取 `runtime/user-preferences.json`。如果 `onboarded` 不是 `true`，只询问尚未明确的五项：
+
+1. 毕业届次；
+2. 目标岗位；
+3. 目标城市；
+4. 只看校招，还是也看实习、实习转正；
+5. 想找哪类公司（用 `discovery.company_type_options`：`互联网大厂` / `AI独角兽·大模型公司` / `垂类·行业公司` / `都要`），以及是否有额外的公司 / 行业偏好。
+
+将答案写入 `runtime/user-preferences.json`：
+
+- 城市为空数组表示全国；
+- 公司类型（第 5 项）用来在第 1 步生成“公司队列”并决定优先搜谁；具体名单由运行时实时搜索得到，不写死，用户不需要自己知道有哪些公司；
+- 公司和行业偏好默认用于排序加分，不做硬过滤；
+- 不要求用户填写关键词表，由 Agent 根据自然语言目标生成 `role_keywords`；例如“AI产品”应覆盖 AI应用产品经理、AI大模型产品经理、AI Agent产品经理、AIGC产品经理和产品经理（AI方向）等常见名称；
+- 完成后把 `onboarded` 设为 `true`，并向用户复述配置摘要。
+
+问公司类型时保持与其它提问一致的中性口吻：说明具体公司名单由助手在运行时实时搜索得到，用户只需选择一个大类，不需要自己列出公司。
+
+关于是否开启“更新通知”，放到第一次出结果之后再问（见第 5 步），初始化阶段不要追问。
+
+## 第 1 步：发现岗位（分阶段 + 流式交付）
+
+读取 `config/project.json`（尤其 `discovery` 段）和 `references/source-strategy.md`。
+
+核心原则：**用户等的不是“全部搜完”，而是“下一个能投的岗位”。所以永远边搜边给，不要先算完再交付。** 详见 [source-strategy.md](references/source-strategy.md) 的“分阶段流式发现”。
+
+发现分两步：
+
+**1a. 先发现“公司队列”（实时，一次一打多）**
+
+- 公司类型由用户在第 0 步选定（`互联网大厂` / `AI独角兽·大模型公司` / `垂类·行业公司` / `都要`）；名单**不写死**。
+- 用聚合 / 榜单 / 高校就业网这类“一次能带出几十家”的 `platform` 线索页，按用户的城市＋岗位＋公司类型，**实时搜出**一批“在招公司名 + 岗位线索”，得到有序队列（如：字节 → 阿里 → 腾讯 → …）。
+- 排序可用 `discovery.employer_anchors` 让知名公司先出；`employer_anchors` 只是排序锚点与偶发兜底，**真实名单以本次搜索为准**。
+- 这批线索本身可作为“初筛版（待核验）”先回给用户看，不浪费。
+
+**1b. 再按队列“逐家”核验补全（流式，搜完一家出一家）**
+
+- 依队列顺序，一次并发处理不超过 `discovery.stream.max_concurrent_lookups` 家；
+- 家内先给“最新发布 / 在招”的岗位（`in_hiring_first`），存量往后；
+- **每搜完一家就把该公司岗位追加回当前聊天**（`deliver_per_company`），不要等整队跑完；
+- 第一波先出 `first_batch_max_companies` 家（默认 3），让用户几秒内先看到；
+- 单次运行最多 `max_companies_per_run` 家、每家最多 `max_per_company` 条，避免失控；
+- 出完一批后，如 `ask_before_long_tail` 为真，询问“要不要继续找 AI 独角兽 / 垂类等长尾”，用户说“继续”才扩，说“够了”立即停并整理已出结果；
+- 队列里未搜的公司留到下次继续，不丢弃。
+
+候选岗位必须符合 [data-contract.md](references/data-contract.md)：`source_tier` 只能是 `official`、`official_wechat`、`platform` 三者之一，聚合导流页 / 媒体链接会被脚本直接拒绝，只能当“线索”。逐条流式产出统一写入（可多次追加）：
+
+```text
+runtime/inbox/jobs-input.json
+```
+
+禁止猜测发布时间或截止时间；页面未明确给出时写 `unknown`。某个来源失败或为空时如实记录，不反复绕过访问限制。
+
+## 第 2 步：官方核验
+
+对非官方来源发现的岗位，优先寻找企业招聘官网详情页：
+
+- 找到官方详情页：将其设为主来源，原聚合页写入 `alternate_sources`；
+- 只找到企业官方公众号：来源等级写 `official_wechat`；
+- 无法找到官方页：保留真实来源等级，不伪装成官方；
+- 官方页面明确关闭、下线或停止招聘：`source_status` 写 `closed`；
+- 页面仍可投递：`source_status` 写 `open`；
+- 无法判断：写 `unknown`。
+
+每次最多深入核验 5 家新公司，避免成本失控。
+
+## 第 3 步：匹配、去重和变化检测
+
+运行：
+
+```bash
+python3 "$SKILL_DIR/scripts/radar.py" run \
+  --input "$SKILL_DIR/runtime/inbox/jobs-input.json" \
+  --preferences "$SKILL_DIR/runtime/user-preferences.json" \
+  --project-config "$SKILL_DIR/config/project.json" \
+  --state-dir "$SKILL_DIR/runtime/state"
+```
+
+程序必须负责：
+
+- 按届次、岗位、城市和招聘类型匹配；
+- 公司与行业偏好只加分；
+- 同公司、同岗位、同城市、同届次、同招聘类型跨来源去重；
+- 官方来源优先，较弱来源保留为备用证据；
+- 比较稳定字段，识别 `new`、`changed`、`seen`；
+- 输出具体 `changed_fields`；
+- 截止时间早于运行日期，或官方页面明确关闭时标为 `expired`；
+- 已截止岗位进入归档，不进入推送；
+- `fetched_at` 不参与变化判断。
+
+## 第 4 步：直接回复聊天
+
+脚本默认输出一份简洁的聊天清单，只包含新增和有变化且尚未截止的岗位。把脚本输出完整回复到当前聊天，不要只告诉用户文件路径，也不要要求用户打开报告。
+
+内部状态文件：
+
+```text
+runtime/state/
+├── jobs.json
+├── jobs.csv
+├── seen.json
+├── expired.json
+├── rejected.json
+├── daily/YYYY-MM-DD.md
+└── outbox/YYYY-MM-DD.md
+```
+
+聊天清单必须包含：
+
+- 公司；
+- 岗位名称；
+- 城市；
+- 招聘类型；
+- 薪资待遇；
+- 发布时间；
+- 截止时间；
+- 岗位关键词（从岗位要求中提炼的重要关键词）；
+- 岗位亮点；
+- 投递链接；
+- 信息来源；
+- 状态和变化字段。
+
+`daily/` 是内部审计快照；`outbox/` 是本次聊天清单的内部副本。用户不需要打开这些文件。`seen`、`expired` 和同批重复岗位不得反复回复。
+
+## 第 5 步：结果处理完成后，询问是否开启更新通知
+
+**第一次运行、把岗位清单交付给用户之后**，再问一句：“岗位有新增或变化时，是否允许我通知你？”
+
+- 用户不允许：把 `schedule.notify_on_update` 设为 `false`（默认即是），结束，什么都不额外做；
+- 用户允许：把 `schedule.notify_on_update` 设为 `true`，并按第 6 步安排后续心跳运行。
+
+用户之后随时可以反悔：说“不想要通知了”就把 `notify_on_update` 改回 `false`，之后即使有新增或变化也不再主动发；说“重新打开通知”再改回 `true`。这是一个可反复开关的开关，不是一次性设置。
+
+## 第 6 步：心跳通知（仅在 `notify_on_update` 为 `true` 时）
+
+心跳的含义很简单：**每隔一段时间，让 Agent 重新把这个 Skill 跑一遍（重新搜集 → 去重 → 和历史状态对比）**。
+
+- 如果这次跑出来有“新增”或“有变化”的岗位，就把这份清单发到当前对话；
+- 如果没有任何新增或变化，就什么都不发，保持安静，不打扰用户。
+
+它只依赖“重新运行 + 与历史状态对比”，不做任何系统弹窗、邮件或 Webhook。**“重新运行”由谁触发，分两层，从通用到增强：**
+
+### 6.1 默认层（人人可用，零配置，跨平台跨模型）
+
+任何人克隆本 Skill 都默认走这一层，不依赖任何定时器：
+
+1. **会话开始即增量刷新（这就是通用的“每日采集器”）**：当本 Skill 在一次会话里被激活、且 `notify_on_update` 为 `true`、距上次运行已跨天时，Agent **自动用宿主自带的联网搜索重新搜集**用户关注的公司（如字节、阿里）→ 去重 → 和历史状态对比 → 只把新增/变化发给用户，无更新则安静。用户**不需要**每次专门说“查一下”，也**不需要**配置任何后台命令。因为用户每天都会打开自己的 AI 客户端，“发现新岗”这件需要联网的事就天然发生在每天的第一次对话里——这是唯一对所有 GitHub 用户都零配置、零成本、不绑设备的采集方式。
+2. **用户主动触发**：用户任何时候说“查一下 / 看看有没有新的”，也立即重跑。
+3. 日常入口加 `--heartbeat`，无更新零输出，有更新才回复清单：
+
+```bash
+python3 "$SKILL_DIR/scripts/run_daily.py" \
+  --project-config "$SKILL_DIR/config/project.json" --heartbeat
+```
+
+`notify_on_update` 为 `true` 时，`run_daily.py` 会自动附带心跳，无需手动加参数。
+
+### 6.2 可选增强层：宿主 / 系统定点运行（“每天固定时间自动推送”）
+
+用户明确想要“每天固定时间自动推送”时，按下列优先级落地，并**如实说明代价**：
+
+1. **优先用宿主 Agent / 客户端自带的定时或提醒能力**（若有），让它到点重新运行本 Skill，最省心、无需碰系统。
+2. 宿主没有定时能力时，可用跨平台脚本 [scripts/schedule_task.py](scripts/schedule_task.py) 注册一个**操作系统原生定时任务**（macOS launchd / Linux cron / Windows 计划任务）。它在运行时按用户所在系统与所选时间生成配置，**不写死路径、不绑定维护者设备**：
+
+```bash
+# 先预览（默认 print，不改动系统，安全）：
+python3 "$SKILL_DIR/scripts/schedule_task.py" --action print --time 08:00
+# 用户确认后再真正安装（会修改本机）：
+python3 "$SKILL_DIR/scripts/schedule_task.py" --action install --time 08:00
+# 查看 / 卸载：
+python3 "$SKILL_DIR/scripts/schedule_task.py" --action status
+python3 "$SKILL_DIR/scripts/schedule_task.py" --action remove
+```
+
+安装前必须先 `print` 预览并征得用户同意；同意后把用户选的时间写入 `schedule.time`、`schedule.enabled` 设为 `true`。
+
+**必须对用户讲清楚的两条真实限制（不得隐瞒、不得夸大成“云端 24 小时”）：**
+
+- **要电脑开机**：系统定时任务只在这台电脑开机时到点触发；关机 / 休眠期间不会跑，也不会补跑。
+- **定时任务本身不“重新联网搜岗”**：`run_daily.py` 默认只重新处理已有输入（去重、变化、截止归档），因此 `config/project.json` 的 `collector.command` **默认留空且应保持留空**（原因见该字段的 `command_note`）。这不是缺陷：真正的新岗发现由 6.1 的“会话开始即自动联网搜集”承担，对所有用户零配置、零成本。不存在一条“既通用、又免费、又对所有 GitHub 用户都能跑”的后台联网命令，所以不要为了让定时任务能搜新岗而硬编 `collector.command` 分发出去。
+
+3. 宿主既不支持定时、用户也不想用系统任务时，退回默认层：告诉用户“下次你来用我时会自动增量刷新，或随时说‘查一下’”，**绝不用本机系统任务伪装成云端自动推送**。
+
+## 验收
+
+```bash
+bash "$SKILL_DIR/scripts/validate_skill.sh"
+```
+
+验收必须证明：
+
+1. 首次运行产生新增岗位；
+2. 同一输入再次运行不重复推送；
+3. 跨来源重复岗位只保留更强来源；
+4. 字段发生变化时输出 `changed` 和具体变化字段；
+5. 变化输入再次运行变成 `seen`；
+6. 明确截止和日期过期的岗位进入 `expired`；
+7. 已截止岗位不进入聊天清单；
+8. 城市、招聘类型、发布时间、截止时间、来源和亮点均进入聊天清单；
+9. 默认命令直接输出聊天清单，JSON 只用于自动化测试。
+
+## 安全与真实性
+
+- 只访问公开页面，不抓取登录后、内部或非公开接口；
+- 不存储 Cookie、账号密码、招聘联系人私密信息；
+- 不绕过验证码、反爬或访问限制；
+- 未知日期写 `unknown`，不得猜测；
+- 内部状态和聊天清单保留来源名称、等级、链接和抓取时间；
+- 所有岗位在投递前仍应回到企业招聘官网确认。
