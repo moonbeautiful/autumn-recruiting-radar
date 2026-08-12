@@ -2,6 +2,20 @@
 
 一个可复制的校招、实习和实习转正监控 Skill。它参考了 RedSkill 中 `autumn-recruitment-tracker` 的真实工作流，并独立实现了更完整的数据合同和确定性状态引擎。
 
+## 快速开始
+
+1. **拿到 Skill**：`git clone https://github.com/moonbeautiful/autumn-recruiting-radar` 到本地，或复制整个目录到你的项目。
+2. **在支持联网搜索的 AI 客户端里唤起它**（Trae、Claude 等）：直接说“帮我搜集秋招岗位”即可。首次会用弹窗/提问确认你的毕业届次、目标岗位、城市、招聘类型和公司类型，无需手动编辑任何 JSON。
+3. **零依赖**：脚本是纯 Python 3.8+ 标准库，Windows / macOS / Linux 通用，不装第三方包、不控制浏览器、不产生任何费用。
+4. **想先本地验证**（可选）：
+
+   ```bash
+   python3 scripts/bootstrap.py            # 初始化 runtime/
+   bash   scripts/validate_skill.sh        # 跑内置 8 项验收，全绿即可用
+   ```
+
+> 岗位发现由对话中的 AI 用宿主自带联网搜索实时完成；若客户端无联网能力，Skill 会如实提示你换一个支持联网的客户端，绝不编造岗位。详见 [SKILL.md](SKILL.md)。
+
 ## 比参考版本增加的能力
 
 - 首次使用默认询问目标城市；
