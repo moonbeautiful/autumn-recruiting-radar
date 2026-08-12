@@ -105,9 +105,10 @@
       "official_wechat"
     ],
     "stream": {
+      "note": "深度优先：一次只深挖一家公司，把该家所有符合硬条件的岗位挖全并交付，然后必须停下询问是否挖下一家。deliver_per_company=每挖完一家立即交付；companies_before_ask=交付几家后必须征询(默认1=一家一问)；max_concurrent_lookups 仅用于单家内部并发拉取该公司多个岗位页，不用于同时铺开多家。",
       "deliver_per_company": true,
       "in_hiring_first": true,
-      "first_batch_max_companies": 3,
+      "companies_before_ask": 1,
       "max_companies_per_run": 12,
       "max_per_company": 5,
       "max_concurrent_lookups": 6,

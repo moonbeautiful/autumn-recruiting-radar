@@ -79,7 +79,7 @@ Users can change via conversation:
 - Which company type (big-tech / AI unicorn·LLM / vertical·industry / all) plus extra company & industry preferences;
 - The daily run time, only when the user explicitly asks for scheduling.
 
-> Discovery is two-staged and streamed: first build a **live company queue** by "city + role + company type", then **verify company by company, delivering each as it finishes**; the user can stop anytime. The company list is never hardcoded — it comes from the live search. See Step 1 in [SKILL.md](SKILL.md) and [source-strategy.md](references/source-strategy.md).
+> Discovery is **depth-first, one company at a time**: first build a **live company queue** by "city + role + company type" (only to decide the order), then **dig into the first company thoroughly — collect all of its jobs that match your hard filters, deliver them, then ask whether to move to the next company**; the user can stop anytime. The company list is never hardcoded — it comes from the live search, using only the host's background web search (no browser control). See Step 1 in [SKILL.md](SKILL.md) and [source-strategy.md](references/source-strategy.md).
 
 Maintainer-only configuration:
 
@@ -88,7 +88,7 @@ Maintainer-only configuration:
 - Dedupe key;
 - Change-detection fields;
 - Deadline rules;
-- Staged streaming-discovery params (`discovery`: queue order, per-batch company count, concurrency cap, employer ranking anchors);
+- Depth-first discovery params (`discovery`: queue order, per-company job cap, in-company concurrency cap, employer ranking anchors);
 - Background collector command;
 - State retention and chat-list rules.
 
